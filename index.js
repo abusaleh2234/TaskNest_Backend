@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config()
 const app = express()
 const port = process.env.PORT || 5000
@@ -25,7 +25,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
 
     const tasksCollection = client.db("TaskNextDB").collection("tasks");
     const userCollection = client.db("TaskNextDB").collection("users");
@@ -53,15 +53,68 @@ async function run() {
         res.send(result)
     })
 
+    app.get("/todotask", async(req, res) => {
+      const query = {status: "to-do"}
+      const result = await tasksCollection.find(query).toArray()
+      res.send(result)
+    })
+
+    app.get("/ongingtask", async(req, res) => {
+      const query = {status: "Ongoing"}
+      const result = await tasksCollection.find(query).toArray()
+      res.send(result)
+    })
+    app.get("/completedtask", async(req, res) => {
+      const query = {status: "Completed"}
+      const result = await tasksCollection.find(query).toArray()
+      res.send(result)
+    })
+    
+    app.get("/ongingtask", async(req, res) => {
+      const query = {status: ""}
+      const result = await tasksCollection.find(query).toArray()
+      res.send(result)
+    })
+
     app.post("/addtask",async (req, res) => {
         const task = req.body
         const result = await tasksCollection.insertOne(task)
         res.send(result)
     })
 
+    app.put("/addongoing/:id", async(req, res) => {
+      const id = req.params.id
+      const filter = {_id: new ObjectId(id)}
+      const uodeteDoc = {
+        $set: {
+          status: "Ongoing"
+        }
+      }
+      const result = await tasksCollection.updateOne(filter,uodeteDoc)
+      res.send(result)
+    })
+    app.put("/addcomplete/:id", async(req, res) => {
+      const id = req.params.id
+      const filter = {_id: new ObjectId(id)}
+      const uodeteDoc = {
+        $set: {
+          status: "Completed"
+        }
+      }
+      const result = await tasksCollection.updateOne(filter,uodeteDoc)
+      res.send(result)
+    })
+
+    app.delete("/deletetask/:id", async (req, res) => {
+      const id = req.params.id
+      const filter = {_id: new ObjectId(id)}
+      const result = await tasksCollection.deleteOne(filter)
+      res.send(result)
+    })
+
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    // await client.db("admin").command({ ping: 1 });
+    // console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
